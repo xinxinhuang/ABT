@@ -1,0 +1,13 @@
+{
+  "name": "a-boring-tcg",
+  "version": "1.0.0",
+  "description": "A Boring TCG - Collect and open booster packs",
+  "main": "index.html",
+  "scripts": {
+    "start": "browser-sync start --server --files \"**/*.css, **/*.html, **/*.js\"",
+    "build": "echo 'No build step required for static site'"
+  },
+  "keywords": ["tcg", "card", "game", "booster"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Boring TCG: Booster Packs</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>A Boring TCG</h1>
+        </header>
+        
+        <main>
+            <section class="action-section">
+                <button id="humanoid-booster-btn" class="btn primary">Humanoid Booster</button>
+                <button id="weapon-booster-btn" class="btn" style="opacity: 0.6; cursor: not-allowed;" title="Coming Soon">Weapon Booster</button>
+            </section>
+
+            <section class="timers-section">
+                <h2>Active Timers</h2>
+                <div id="active-timers" class="timers-container">
+                    <!-- Timers will be added here dynamically -->
+                </div>
+            </section>
+
+            <section class="collection-section">
+                <div class="collection-container">
+                    <div class="collection-stats">
+                        <div id="collection-stats">
+                            <!-- Collection stats will be added here dynamically -->
+                        </div>
+                    </div>
+                    <div id="card-collection" class="cards-grid">
+                        <!-- Cards will be added here dynamically -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Timer Setup Modal -->
+    <div id="timer-modal" class="modal">
+        <div class="modal-content">
+            <h2>Set Timer Duration</h2>
+            <div class="slider-container">
+                <input type="range" id="timer-slider" min="4" max="24" value="4">
+                <div class="slider-labels">
+                    <span>4h</span>
+                    <span id="selected-time">4h</span>
+                    <span>24h</span>
+                </div>
+                <p class="bonus-info">
+                    Every hour after 4h adds +1% chance for better stats (max +20% at 24h)
+                </p>
+            </div>
+                        <div class="modal-actions">
+                <button id="cancel-timer" class="btn">Cancel</button>
+                <button id="confirm-timer" class="btn primary">Start Timer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Reveal Modal -->
+    <div id="card-modal" class="modal">
+        <div class="modal-content card-reveal">
+            <h2>Card Reveal!</h2>
+            <div id="revealed-card" class="card">
+                <!-- Card will be shown here -->
+            </div>
+            <button id="close-card" class="btn primary">Add to Collection</button>
+        </div>
+    </div>
+
+    <!-- Load scripts with error handling -->
+    <script>
+        // Function to load scripts in order
+        function loadScripts(scripts, callback) {
+            if (scripts.length === 0) {
+                if (callback) callback();
+                return;
+            }
+            
+            const script = scripts.shift();
+            const scriptElement = document.createElement('script');
+            scriptElement.src = script;
+            scriptElement.onload = function() {
+                console.log('Loaded script:', script);
+                loadScripts(scripts, callback);
+            };
+            scriptElement.onerror = function() {
+                console.error('Error loading script:', script);
+            };
+            document.body.appendChild(scriptElement);
+        }
+        
+        // Start loading scripts when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, starting script loading...');
+            
+            const scripts = [
+                'js/storage.js',
+                'js/cards.js',
+                'js/timers.js',
+                'js/app.js'
+            ];
+            
+            loadScripts(scripts, function() {
+                console.log('All scripts loaded successfully');
+                
+                // Verify that all required modules are available
+                if (window.storage && window.cards && window.timers) {
+                    console.log('All modules loaded successfully');
+                    // Initialize the application
+                    if (window.app && typeof window.app.init === 'function') {
+                        window.app.init();
+                    }
+                } else {
+                    console.error('Some modules failed to load');
+                    if (!window.storage) console.error('Storage module not found');
+                    if (!window.cards) console.error('Cards module not found');
+                    if (!window.timers) console.error('Timers module not found');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
