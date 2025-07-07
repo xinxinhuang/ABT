@@ -9,5 +9,14 @@
   },
   "keywords": ["tcg", "card", "game", "booster"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "vercel": {
+    "outputDirectory": ".",
+    "rewrites": [
+      { "source": "/(.*)", "destination": "/index.html" }
+    ]
+  }
 }

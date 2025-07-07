@@ -223,7 +223,7 @@ shell-pack-app/
 3. **Multiple Timers**: Handle several concurrent timers
 4. **Page Refresh**: Ensure timers persist across sessions
 5. **Edge Cases**: Validate boundary conditions (exactly 4h, 24h)
-   
+
 ## Success Metrics
 - Timer accuracy within 1-minute tolerance
 - Proper bonus calculation
