@@ -39,7 +39,7 @@ function generateCard(bonusPercentage, cardTypes) {
     const cardType = cardTypes[Math.floor(Math.random() * cardTypes.length)];
 
     // Determine rarity and bonus based on probability
-    let rarity = 'grey';
+    let rarity = 'bronze';
     let bonus = 0;
     const roll = randomInRange(1, 100);
 
@@ -48,12 +48,12 @@ function generateCard(bonusPercentage, cardTypes) {
         rarity = 'gold';
         bonus = randomInRange(15, 20);
     } 
-    // Blue (Rare): +5 to +14 bonus (e.g., 15% chance at max bonus)
+    // Silver (Rare): +5 to +14 bonus (e.g., 15% chance at max bonus)
     else if (roll <= bonusPercentage * 0.75) {
-        rarity = 'blue';
+        rarity = 'silver';
         bonus = randomInRange(5, 14);
     }
-    // Grey (Common): +0 to +4 bonus
+    // Bronze (Common): +0 to +4 bonus
     else {
         bonus = randomInRange(0, 4);
     }

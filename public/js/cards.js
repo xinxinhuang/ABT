@@ -1,6 +1,6 @@
 // --- Constants and Config ---
 const TYPE_ORDER = { dwarf: 1, bigfoot: 2, elf: 3 };
-const RARITY_ORDER = { gold: 3, blue: 2, grey: 1 };
+const RARITY_ORDER = { gold: 3, silver: 2, bronze: 1 };
 const CARD_STATS = ['str', 'dex', 'int'];
 const MAX_STAT = 40; // Consider moving to config per cardType if needed
 
@@ -166,24 +166,24 @@ function renderCollectionStats(cards) {
     // Get the stats elements from the DOM
     const totalCardsEl = document.getElementById('total-cards');
     const goldCardsEl = document.getElementById('gold-cards');
-    const blueCardsEl = document.getElementById('blue-cards');
     const silverCardsEl = document.getElementById('silver-cards');
+    const bronzeCardsEl = document.getElementById('bronze-cards');
     
-    if (!totalCardsEl || !goldCardsEl || !blueCardsEl || !silverCardsEl) {
+    if (!totalCardsEl || !goldCardsEl || !silverCardsEl || !bronzeCardsEl) {
         console.error('Could not find all stats elements in the DOM');
         return;
     }
     
     // Count cards by rarity
     const goldCount = cards.filter(card => card.rarity === 'gold').length;
-    const blueCount = cards.filter(card => card.rarity === 'blue').length;
     const silverCount = cards.filter(card => card.rarity === 'silver').length;
+    const bronzeCount = cards.filter(card => card.rarity === 'bronze').length;
     
     // Update the DOM elements
     totalCardsEl.textContent = cards.length;
     goldCardsEl.textContent = goldCount;
-    blueCardsEl.textContent = blueCount;
     silverCardsEl.textContent = silverCount;
+    bronzeCardsEl.textContent = bronzeCount;
 }
 
 // --- Render Collection ---

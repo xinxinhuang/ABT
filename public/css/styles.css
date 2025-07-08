@@ -633,13 +633,13 @@ input[type="range"] {
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
-.card.blue {
-    border: 2px solid #4fc3dc;
-    box-shadow: 0 0 10px rgba(79, 195, 220, 0.3);
+.card.silver {
+    border: 2px solid #c0c0c0;
+    box-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
 }
 
-.card.grey {
-    border: 2px solid #cccccc;
+.card.bronze {
+    border: 2px solid #cd7f32;
 }
 
 .card-inner {
@@ -672,12 +672,12 @@ input[type="range"] {
     background: linear-gradient(135deg, #ffd700, #ffa500);
 }
 
-.card-rarity.blue {
-    background: linear-gradient(135deg, #4fc3dc, #6e8efb);
+.card-rarity.silver {
+    background: linear-gradient(135deg, #e0e0e0, #b0b0b0);
 }
 
-.card-rarity.grey {
-    background: linear-gradient(135deg, #cccccc, #999999);
+.card-rarity.bronze {
+    background: linear-gradient(135deg, #d2996c, #a06842);
 }
 
 .card-type {
@@ -733,12 +733,12 @@ input[type="range"] {
     color: #ffd700; /* Gold color */
 }
 
-.stat-item.blue .stat-value {
-    color: #4fc3dc; /* Blue color */
-}
-
 .stat-item.silver .stat-value {
     color: #c0c0c0; /* Silver color */
+}
+
+.stat-item.bronze .stat-value {
+    color: #cd7f32; /* Bronze color */
 }
 
 .stat-item:first-child .stat-value {
