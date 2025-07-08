@@ -79,10 +79,15 @@ function setupEventListeners() {
     // Weapon Booster button - disabled/coming soon
     const weaponBoosterBtn = document.getElementById('weapon-booster-btn');
     if (weaponBoosterBtn) {
-        weaponBoosterBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            showNotification('Weapon Boosters are coming soon!', 'info');
-        });
+        // Remove disabled styles from earlier placeholder state
+        weaponBoosterBtn.style.opacity = '1';
+        weaponBoosterBtn.style.cursor = 'pointer';
+        weaponBoosterBtn.removeAttribute('title');
+        // Optionally add primary styling to make it consistent
+        if (!weaponBoosterBtn.classList.contains('primary')) {
+            weaponBoosterBtn.classList.add('primary');
+        }
+        weaponBoosterBtn.addEventListener('click', () => showTimerModal('weapon'));
     }
     
     // Timer modal elements
@@ -251,14 +256,14 @@ function updateShellPackCount() {
 window.updateShellPackCount = updateShellPackCount;
 
 // This function is called by the 'Open Now' button in the active timers section
-window.openPackImmediately = function(hours) {
+window.openPackImmediately = function(hours, boosterType = 'humanoid') {
     console.log(`[app.js] openPackImmediately called for ${hours} hours`);
 
     // Calculate bonus based on the original timer duration
     const bonusPercentage = Math.min(Math.max((hours - 4) * (100 / 20), 0), 100);
     
     // Generate a single card
-    const card = window.cards.generateCard(bonusPercentage);
+    const card = window.cards.generateCard(bonusPercentage, boosterType);
     
     if (card) {
         // Add the card to the collection

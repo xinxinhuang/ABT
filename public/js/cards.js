@@ -1,216 +1,98 @@
-// Card generation and management for the Shell Pack Booster app
+// --- Constants and Config ---
+const TYPE_ORDER = { dwarf: 1, bigfoot: 2, elf: 3 };
+const RARITY_ORDER = { gold: 3, blue: 2, grey: 1 };
+const CARD_STATS = ['str', 'dex', 'int'];
+const MAX_STAT = 40; // Consider moving to config per cardType if needed
 
-// Attribute labels for display
-const ATTRIBUTE_LABELS = {
-    str: 'Strength',
-    dex: 'Dexterity',
-    int: 'Intelligence'
-};
+// --- Current Booster Pack Config ---
+let currentBoosterPackConfig = null;
 
-const CARD_TYPES = [
-    {
-        name: 'Dwarf — Heavy Arms',
-        type: 'dwarf',
-        description: 'A sturdy dwarf with powerful arms',
-        primaryStat: 'str',
-        baseStats: {
-            str: 20,
-            dex: 5,
-            int: 5
-        },
-        flavorText: 'Brawn over brains, always.'
-    },
-    {
-        name: 'Big Foot — Large Feet',
-        type: 'bigfoot',
-        description: 'A nimble creature with large, dexterous feet',
-        primaryStat: 'dex',
-        baseStats: {
-            str: 5,
-            dex: 20,
-            int: 5
-        },
-        flavorText: 'Light on his feet, quick as the wind.'
-    },
-    {
-        name: 'Elf — Large Head',
-        type: 'elf',
-        description: 'An intelligent elf with a large, wise head',
-        primaryStat: 'int',
-        baseStats: {
-            str: 5,
-            dex: 5,
-            int: 20
-        },
-        flavorText: 'Knowledge is power, and I am its vessel.'
+// --- Helper: Get Config Safely ---
+function getBoosterPackConfig(packName) {
+    if (!window.boosterPacks || !window.boosterPacks[packName]) {
+        throw new Error(`[cards.js] Missing booster pack config for '${packName}'.`);
     }
-];
-
-// Calculate bonus based on wait time (4-24 hours)
-function calculateBonus(elapsedHours) {
-    // Ensure elapsedHours is between 4 and 24
-    const hours = Math.min(Math.max(elapsedHours, 4), 24);
-    // Linear scale: 4h = 1%, 24h = 20%
-    const bonusPercentage = Math.floor((hours - 4) * 1);
-    return Math.min(Math.max(bonusPercentage, 1), 20);
+    return window.boosterPacks[packName];
 }
 
-// Roll a random number between min and max (inclusive)
-function randomInRange(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+// --- Set Current Booster Pack ---
+function setCurrentBoosterPack(packName) {
+    if (!packName) return;
+    try {
+        currentBoosterPackConfig = getBoosterPackConfig(packName);
+        console.log(`[cards.js] Current booster pack set to '${packName}'.`);
+    } catch (e) {
+        console.error(e);
+        currentBoosterPackConfig = null;
+    }
 }
 
-// Generate a card with random attributes based on bonus percentage
-function generateCard(bonusPercentage) {
-    // Select a random card type
-    const cardType = CARD_TYPES[Math.floor(Math.random() * CARD_TYPES.length)];
-    
-    // Determine rarity based on bonus percentage
-    let rarity = 'grey';
-    let bonus = 0;
-    
-    // Determine bonus based on probability
-    const roll = randomInRange(1, 100);
-    
-    // Gold (Legendary): +15 to +20 bonus (5% chance at max bonus)
-    if (roll <= bonusPercentage * 0.25) {
-        rarity = 'gold';
-        bonus = randomInRange(15, 20);
-    } 
-    // Blue (Rare): +5 to +14 bonus (15% chance at max bonus)
-    else if (roll <= bonusPercentage * 0.75) {
-        rarity = 'blue';
-        bonus = randomInRange(5, 14);
-    }
-    // Grey (Common): +0 to +4 bonus (80% chance at max bonus)
-    else {
-        bonus = randomInRange(0, 4);
-    }
-    
-    // Apply bonus to stats
-    const finalStats = {};
-    for (const [stat, baseValue] of Object.entries(cardType.baseStats)) {
-        // Primary stat gets full bonus, others get half (rounded down)
-        const statBonus = stat === cardType.primaryStat ? bonus : Math.floor(bonus / 2);
-        finalStats[stat] = baseValue + statBonus;
-    }
 
-    // Create the final card object
-    const card = {
-        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), // Unique ID
-        name: cardType.name,
-        type: cardType.type,
-        description: cardType.description,
-        flavorText: cardType.flavorText,
-        rarity: rarity,
-        stats: finalStats,
-        bonusPercentage: bonus, // The actual bonus applied to stats
-        createdAt: new Date().toISOString()
-    };
-
-    return card;
+// --- Helper: Find Pack Config By Card Type ---
+function findPackConfigByCardType(cardType) {
+    if (!window.boosterPacks) return null;
+    return Object.values(window.boosterPacks).find(packCfg =>
+        Array.isArray(packCfg.CARD_TYPES) && packCfg.CARD_TYPES.some(ct => ct.type === cardType)
+    ) || null;
 }
 
-// Show a modal with the opened cards
-function showCardModal(cards) {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.right = '0';
-    modal.style.bottom = '0';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    modal.style.zIndex = '1000';
-    
-    const modalContent = document.createElement('div');
-    modalContent.className = 'modal-content';
-    modalContent.style.background = 'white';
-    modalContent.style.padding = '20px';
-    modalContent.style.borderRadius = '8px';
-    modalContent.style.maxWidth = '800px';
-    modalContent.style.width = '90%';
-    modalContent.style.maxHeight = '90vh';
-    modalContent.style.overflowY = 'auto';
-    modalContent.style.position = 'relative';
-    
-    const closeBtn = document.createElement('span');
-    closeBtn.className = 'close';
-    closeBtn.innerHTML = '&times;';
-    closeBtn.style.position = 'absolute';
-    closeBtn.style.top = '10px';
-    closeBtn.style.right = '15px';
-    closeBtn.style.fontSize = '24px';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.onclick = () => document.body.removeChild(modal);
-    
-    const title = document.createElement('h2');
-    title.textContent = 'You got...';
-    title.style.textAlign = 'center';
-    title.style.marginBottom = '20px';
-    
-    const cardsContainer = document.createElement('div');
-    cardsContainer.className = 'cards-container';
-    cardsContainer.style.display = 'flex';
-    cardsContainer.style.justifyContent = 'center';
-    cardsContainer.style.flexWrap = 'wrap';
-    cardsContainer.style.gap = '20px';
-    cardsContainer.style.margin = '20px 0';
-    
-    // Add each card to the container
-    cards.forEach(card => {
-        const cardElement = createCardElement(card, true); // true for pack view
-        cardsContainer.appendChild(cardElement);
-    });
-    
-    const continueBtn = document.createElement('button');
-    continueBtn.className = 'btn primary';
-    continueBtn.textContent = 'Add to Collection';
-    continueBtn.style.display = 'block';
-    continueBtn.style.margin = '20px auto 0';
-    continueBtn.style.padding = '10px 20px';
-    continueBtn.onclick = () => {
-        document.body.removeChild(modal);
-    };
-    
-    modalContent.appendChild(closeBtn);
-    modalContent.appendChild(title);
-    modalContent.appendChild(cardsContainer);
-    modalContent.appendChild(continueBtn);
-    
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-    
-    // Close modal when clicking outside
-    modal.onclick = (e) => {
-        if (e.target === modal) {
-            document.body.removeChild(modal);
-        }
-    };
+// --- Helper: Get Current Booster Pack Config Safely ---
+function getCurrentBoosterPackConfig() {
+    if (!currentBoosterPackConfig) {
+        throw new Error('[cards.js] Current booster pack config not set.');
+    }
+    return currentBoosterPackConfig;
 }
 
-// Expose functions
-window.cards = {
-    generateCard,
-    renderCardCollection,
-    createCardElement,
-    showCardModal
-};
-console.log('[cards.js] Script loaded. window.cards is:', window.cards ? 'defined' : 'undefined');
+// --- Card Generation Wrapper (for compatibility) ---
+/**
+ * Generate a card using cardLogic based on the specified or current booster pack.
+ * This keeps compatibility with older code that expects window.cards.generateCard.
+ * @param {number} bonusPercentage - Bonus percentage for rarity rolls.
+ * @param {string} [boosterType] - Booster pack name (defaults to current or 'humanoid').
+ * @returns {object|null}
+ */
+function generateCard(bonusPercentage = 0, boosterType = 'humanoid') {
+    try {
+        // Directly get the config for the requested booster type.
+        const packConfig = getBoosterPackConfig(boosterType);
+        
+        // Set the current config for other functions that might need it (like UI rendering).
+        currentBoosterPackConfig = packConfig;
 
-// Create HTML for a card element
+        // Generate the card using the retrieved configuration.
+        return window.cardLogic.generateCard(bonusPercentage, packConfig.CARD_TYPES);
+    } catch (err) {
+        console.error(`[cards.js] generateCard failed for boosterType '${boosterType}':`, err);
+        return null;
+    }
+}
+
+// --- Card UI ---
+/**
+ * Create HTML for a card element.
+ * @param {object} card - The card object.
+ * @param {boolean} isPack - True for simplified pack view, false for detailed collection view.
+ * @returns {HTMLElement}
+ */
 function createCardElement(card, isPack = false) {
     const cardElement = document.createElement('div');
-    const cardType = CARD_TYPES.find(ct => ct.type === card.type) || CARD_TYPES[0];
-    
+    let cardType, ATTRIBUTE_LABELS;
+    try {
+        // Prefer the pack config that actually contains this card type to avoid mismatches.
+        const boosterPackConfig = findPackConfigByCardType(card.type) || getCurrentBoosterPackConfig();
+        cardType = boosterPackConfig.CARD_TYPES.find(ct => ct.type === card.type) || boosterPackConfig.CARD_TYPES[0];
+        ATTRIBUTE_LABELS = boosterPackConfig.ATTRIBUTE_LABELS;
+    } catch (e) {
+        cardElement.textContent = "Error: Card config missing.";
+        cardElement.className = "card error";
+        return cardElement;
+    }
+
     if (isPack) {
-        // For pack view (simplified)
+        // --- Simplified booster pack view ---
         cardElement.className = `card-pack ${card.rarity}`;
         cardElement.setAttribute('data-card-type', card.type);
-        
         cardElement.innerHTML = `
             <div class="card-pack-inner">
                 <div class="card-pack-content">
@@ -218,28 +100,21 @@ function createCardElement(card, isPack = false) {
                     <h3>${card.name}</h3>
                     <p>${card.description}</p>
                     <div class="card-pack-stats">
-                        <div class="stat">
-                            <span class="stat-label">${ATTRIBUTE_LABELS.str}</span>
-                            <span class="stat-value">${card.stats.str}</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-label">${ATTRIBUTE_LABELS.dex}</span>
-                            <span class="stat-value">${card.stats.dex}</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-label">${ATTRIBUTE_LABELS.int}</span>
-                            <span class="stat-value">${card.stats.int}</span>
-                        </div>
+                        ${CARD_STATS.map(stat => `
+                            <div class="stat">
+                                <span class="stat-label">${ATTRIBUTE_LABELS[stat]}</span>
+                                <span class="stat-value">${card.stats[stat]}</span>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             </div>
         `;
     } else {
-        // For collection view (detailed)
+        // --- Detailed collection view ---
         cardElement.className = `card ${card.rarity}`;
-        
-        // Create stat bars for visual representation
-        const createStatBar = (value, max = 40) => {
+
+        const createStatBar = (value, max = MAX_STAT) => {
             const percentage = (value / max) * 100;
             return `
                 <div class="stat-bar-container">
@@ -248,279 +123,236 @@ function createCardElement(card, isPack = false) {
                 <span class="stat-value">${value}</span>
             `;
         };
-        
+
         cardElement.innerHTML = `
             <div class="card-inner">
                 <div class="card-header">
                     <h3 class="card-title">${card.name}</h3>
                     <span class="card-rarity ${card.rarity}">${card.rarity.toUpperCase()}</span>
                 </div>
-                
                 <div class="card-type">${cardType.description}</div>
-                
                 <div class="card-stats">
-                    <div class="stat ${cardType.primaryStat === 'str' ? 'primary-stat' : ''}">
-                        <div class="stat-header">
-                            <span class="stat-label">${ATTRIBUTE_LABELS.str}</span>
-                            <span class="stat-value">${card.stats.str}</span>
+                    ${CARD_STATS.map(stat => `
+                        <div class="stat ${cardType.primaryStat === stat ? 'primary-stat' : ''}">
+                            <div class="stat-header">
+                                <span class="stat-label">${ATTRIBUTE_LABELS[stat]}</span>
+                                <span class="stat-value">${card.stats[stat]}</span>
+                            </div>
+                            ${createStatBar(card.stats[stat])}
                         </div>
-                        ${createStatBar(card.stats.str)}
-                    </div>
-                    
-                    <div class="stat ${cardType.primaryStat === 'dex' ? 'primary-stat' : ''}">
-                        <div class="stat-header">
-                            <span class="stat-label">${ATTRIBUTE_LABELS.dex}</span>
-                            <span class="stat-value">${card.stats.dex}</span>
-                        </div>
-                        ${createStatBar(card.stats.dex)}
-                    </div>
-                    
-                    <div class="stat ${cardType.primaryStat === 'int' ? 'primary-stat' : ''}">
-                        <div class="stat-header">
-                            <span class="stat-label">${ATTRIBUTE_LABELS.int}</span>
-                            <span class="stat-value">${card.stats.int}</span>
-                        </div>
-                        ${createStatBar(card.stats.int)}
-                    </div>
+                    `).join('')}
                 </div>
-                
-                <p class="card-flavor">"${card.flavorText}"</p>
-                
+                <p class="card-flavor">"${card.flavorText || ''}"</p>
                 <div class="card-footer">
-                    <small>Bonus: ${card.bonusPercentage}%</small>
-                    <small>${new Date(card.createdAt).toLocaleDateString()}</small>
+                    <small>Bonus: ${card.bonusPercentage ?? 0}%</small>
+                    <small>${card.createdAt ? new Date(card.createdAt).toLocaleDateString() : ''}</small>
                 </div>
             </div>
         `;
     }
-    
     return cardElement;
 }
 
-// Render the card collection
+// --- Stats UI ---
+/**
+ * Render stats for the card collection (advanced version, replaces updateCollectionStats).
+ * @param {Array} cards
+ */
+/**
+ * Update the collection stats in the UI.
+ * @param {Array} cards - Array of card objects in the collection.
+ */
+function renderCollectionStats(cards) {
+    // Get the stats elements from the DOM
+    const totalCardsEl = document.getElementById('total-cards');
+    const goldCardsEl = document.getElementById('gold-cards');
+    const blueCardsEl = document.getElementById('blue-cards');
+    const silverCardsEl = document.getElementById('silver-cards');
+    
+    if (!totalCardsEl || !goldCardsEl || !blueCardsEl || !silverCardsEl) {
+        console.error('Could not find all stats elements in the DOM');
+        return;
+    }
+    
+    // Count cards by rarity
+    const goldCount = cards.filter(card => card.rarity === 'gold').length;
+    const blueCount = cards.filter(card => card.rarity === 'blue').length;
+    const silverCount = cards.filter(card => card.rarity === 'silver').length;
+    
+    // Update the DOM elements
+    totalCardsEl.textContent = cards.length;
+    goldCardsEl.textContent = goldCount;
+    blueCardsEl.textContent = blueCount;
+    silverCardsEl.textContent = silverCount;
+}
+
+// --- Render Collection ---
+/**
+ * Render the entire card collection in the UI.
+ */
 function renderCardCollection() {
     console.log('[renderCardCollection] Starting to render card collection');
     
-    const collectionContainer = document.getElementById('card-collection');
-    if (!collectionContainer) {
-        console.error('[renderCardCollection] Collection container not found');
+    const humanoidContainer = document.getElementById('humanoid-collection');
+    const weaponContainer = document.getElementById('weapon-collection');
+    
+    if (!humanoidContainer || !weaponContainer) {
+        console.error('[renderCardCollection] Collection containers not found');
         return;
     }
     
-    console.log('[renderCardCollection] Collection container found');
-    
-    // Clear the container
-    collectionContainer.innerHTML = '';
-    
-    // Check if storage is available
-    if (!window.storage) {
-        const errorMsg = '[renderCardCollection] Storage module not found';
-        console.error(errorMsg);
-        collectionContainer.innerHTML = `<p>Error: ${errorMsg}. Please refresh the page.</p>`;
+    // Clear both containers
+    humanoidContainer.innerHTML = '';
+    weaponContainer.innerHTML = '';
+
+    if (!window.storage || typeof window.storage.getAllCards !== 'function') {
+        const errorMsg = 'Storage module or getAllCards function not found.';
+        console.error(`[renderCardCollection] ${errorMsg}`);
+        humanoidContainer.innerHTML = `<p>Error: ${errorMsg} Please refresh.</p>`;
         return;
     }
-    
-    if (typeof window.storage.getAllCards !== 'function') {
-        const errorMsg = '[renderCardCollection] getAllCards is not a function';
-        console.error(errorMsg, 'Available methods:', Object.keys(window.storage));
-        collectionContainer.innerHTML = `<p>Error: ${errorMsg}. Please refresh the page.</p>`;
-        return;
-    }
-    
-    console.log('[renderCardCollection] Storage module is available');
-    
-    // Get all cards from storage
-    console.log('[renderCardCollection] Getting all cards from storage...');
+
     let cards = [];
     try {
         cards = window.storage.getAllCards();
         console.log(`[renderCardCollection] Retrieved ${cards.length} cards from storage`);
     } catch (error) {
         console.error('[renderCardCollection] Error getting cards from storage:', error);
-        collectionContainer.innerHTML = '<p>Error: Could not load cards. Please refresh the page.</p>';
+        humanoidContainer.innerHTML = '<p>Error: Could not load cards. Please refresh.</p>';
         return;
     }
+
+    // Separate cards into humanoid and weapon types
+    const humanoidCards = [];
+    const weaponCards = [];
     
-    // No need to show empty state message anymore
-    // The grid will be empty but the stats will still show
-    
-    // Sort cards by type, then rarity, then total stats
-    cards.sort((a, b) => {
-        // Sort by type (Dwarf > Bigfoot > Elf)
-        const typeOrder = { 'dwarf': 1, 'bigfoot': 2, 'elf': 3 };
-        const aType = typeOrder[a.type] || 0;
-        const bType = typeOrder[b.type] || 0;
-        
-        if (aType !== bType) {
-            return aType - bType;
-        }
-        
-        // Then by rarity (gold > blue > grey)
-        const rarityOrder = { 'gold': 3, 'blue': 2, 'grey': 1 };
-        const aRarity = rarityOrder[a.rarity] || 0;
-        const bRarity = rarityOrder[b.rarity] || 0;
-        
-        if (aRarity !== bRarity) {
-            return bRarity - aRarity;
-        }
-        
-        // Then by total stats
-        const aTotal = Object.values(a.stats).reduce((sum, val) => sum + val, 0);
-        const bTotal = Object.values(b.stats).reduce((sum, val) => sum + val, 0);
-        return bTotal - aTotal;
-    });
-    
-    // Create a grid container
-    const grid = document.createElement('div');
-    grid.className = 'cards-grid';
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
-    grid.style.gap = '20px';
-    grid.style.padding = '20px 0';
-    
-    // Add cards to the grid
     cards.forEach(card => {
-        const cardElement = createCardElement(card, false); // false for collection view
-        grid.appendChild(cardElement);
-    });
-    
-    // Add collection stats
-    const statsContainer = document.createElement('div');
-    statsContainer.className = 'collection-stats';
-    
-    const totalCards = cards.length;
-    const goldCards = cards.filter(c => c.rarity === 'gold').length;
-    const blueCards = cards.filter(c => c.rarity === 'blue').length;
-    const greyCards = cards.filter(c => c.rarity === 'grey').length;
-    
-    // Create stats elements
-    const statsHeader = document.createElement('div');
-    statsHeader.style.display = 'flex';
-    statsHeader.style.justifyContent = 'space-between';
-    statsHeader.style.alignItems = 'center';
-    statsHeader.style.marginBottom = '15px';
-    
-    const statsTitle = document.createElement('h3');
-    statsTitle.textContent = 'Collection Overview';
-    statsTitle.style.margin = '0';
-    
-    const emptyCollectionBtn = document.createElement('button');
-    emptyCollectionBtn.id = 'empty-collection-btn';
-    emptyCollectionBtn.className = 'btn danger';
-    emptyCollectionBtn.textContent = 'Empty Collection';
-    emptyCollectionBtn.style.marginLeft = '15px';
-    
-    statsHeader.appendChild(statsTitle);
-    statsHeader.appendChild(emptyCollectionBtn);
-    
-    // Add event listener for the empty collection button
-    emptyCollectionBtn.addEventListener('click', function() {
-        if (confirm('Are you sure you want to empty your collection? This cannot be undone.')) {
-            window.storage.clearCardCollection();
-            window.cards.renderCardCollection();
-            showNotification('Collection has been cleared', 'info');
+        if (['dwarf', 'bigfoot', 'elf'].includes(card.type)) {
+            humanoidCards.push(card);
+        } else if (['shield', 'sword', 'hammer'].includes(card.type)) {
+            weaponCards.push(card);
         }
     });
-    
-    const statsGrid = document.createElement('div');
-    statsGrid.className = 'stats-grid';
-    statsGrid.style.display = 'grid';
-    statsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(150px, 1fr))';
-    statsGrid.style.gap = '15px';
-    statsGrid.style.marginBottom = '20px';
-    
-    const createStatBox = (label, value, color = '') => {
-        const box = document.createElement('div');
-        box.className = 'stat-box';
-        box.style.background = '#fff';
-        box.style.padding = '15px';
-        box.style.borderRadius = '8px';
-        box.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-        box.style.textAlign = 'center';
-        
-        const valueEl = document.createElement('div');
-        valueEl.textContent = value;
-        valueEl.style.fontSize = '1.5em';
-        valueEl.style.fontWeight = 'bold';
-        valueEl.style.color = color || 'var(--text-color)';
-        valueEl.style.marginBottom = '5px';
-        
-        const labelEl = document.createElement('div');
-        labelEl.textContent = label;
-        labelEl.style.fontSize = '0.9em';
-        labelEl.style.color = 'var(--text-light)';
-        
-        box.appendChild(valueEl);
-        box.appendChild(labelEl);
-        return box;
+
+    // Sort each category
+    const sortCards = (cards) => {
+        return cards.sort((a, b) => {
+            if ((TYPE_ORDER[a.type] || 0) !== (TYPE_ORDER[b.type] || 0))
+                return (TYPE_ORDER[a.type] || 0) - (TYPE_ORDER[b.type] || 0);
+            if ((RARITY_ORDER[a.rarity] || 0) !== (RARITY_ORDER[b.rarity] || 0))
+                return (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
+            const aTotal = CARD_STATS.reduce((sum, stat) => sum + (a.stats[stat] || 0), 0);
+            const bTotal = CARD_STATS.reduce((sum, stat) => sum + (b.stats[stat] || 0), 0);
+            return bTotal - aTotal;
+        });
     };
-    
-    // Add stat boxes
-    statsGrid.appendChild(createStatBox('Total Cards', totalCards, 'var(--primary-color)'));
-    statsGrid.appendChild(createStatBox('Gold Cards', goldCards, '#ffd700'));
-    statsGrid.appendChild(createStatBox('Blue Cards', blueCards, '#4fc3dc'));
-    statsGrid.appendChild(createStatBox('Grey Cards', greyCards, '#999'));
-    
-    // Add type distribution
-    const typeCounts = cards.reduce((acc, card) => {
-        acc[card.type] = (acc[card.type] || 0) + 1;
-        return acc;
-    }, {});
-    
-    const typeStats = document.createElement('div');
-    typeStats.className = 'type-stats';
-    typeStats.style.marginTop = '15px';
-    typeStats.style.paddingTop = '15px';
-    typeStats.style.borderTop = '1px solid #eee';
-    
-    const typeTitle = document.createElement('h4');
-    typeTitle.textContent = 'By Type';
-    typeTitle.style.marginBottom = '10px';
-    typeTitle.style.color = 'var(--text-color)';
-    
-    const typeGrid = document.createElement('div');
-    typeGrid.style.display = 'grid';
-    typeGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(120px, 1fr))';
-    typeGrid.style.gap = '10px';
-    
-    Object.entries(typeCounts).forEach(([type, count]) => {
-        const typeBox = document.createElement('div');
-        typeBox.className = 'type-box';
-        typeBox.style.background = '#fff';
-        typeBox.style.padding = '10px';
-        typeBox.style.borderRadius = '6px';
-        typeBox.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-        typeBox.style.display = 'flex';
-        typeBox.style.justifyContent = 'space-between';
-        typeBox.style.alignItems = 'center';
-        
-        const typeName = document.createElement('span');
-        typeName.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-        typeName.style.fontWeight = '500';
-        
-        const typeCount = document.createElement('span');
-        typeCount.textContent = count;
-        typeCount.style.background = 'var(--primary-color)';
-        typeCount.style.color = 'white';
-        typeCount.style.borderRadius = '12px';
-        typeCount.style.padding = '2px 8px';
-        typeCount.style.fontSize = '0.8em';
-        
-        typeBox.appendChild(typeName);
-        typeBox.appendChild(typeCount);
-        typeGrid.appendChild(typeBox);
-    });
-    
-    typeStats.appendChild(typeTitle);
-    typeStats.appendChild(typeGrid);
-    
-    // Assemble stats container
-    statsContainer.appendChild(statsHeader);
-    statsContainer.appendChild(statsGrid);
-    statsContainer.appendChild(typeStats);
-    
-    // Add stats and grid to the container
-    collectionContainer.innerHTML = ''; // Clear any existing content
-    collectionContainer.appendChild(statsContainer);
-    collectionContainer.appendChild(grid);
+
+    const sortedHumanoidCards = sortCards(humanoidCards);
+    const sortedWeaponCards = sortCards(weaponCards);
+
+    // Render stats with both counts
+    renderCollectionStats(cards);
+
+    // Render humanoid cards
+    if (sortedHumanoidCards.length > 0) {
+        sortedHumanoidCards.forEach(card => {
+            const cardElement = createCardElement(card, false);
+            if (cardElement) {
+                humanoidContainer.appendChild(cardElement);
+            }
+        });
+    } else {
+        humanoidContainer.innerHTML = '<p class="no-cards">No humanoid cards yet. Open a Humanoid Booster to get started!</p>';
+    }
+
+    // Render weapon cards
+    if (sortedWeaponCards.length > 0) {
+        sortedWeaponCards.forEach(card => {
+            const cardElement = createCardElement(card, false);
+            if (cardElement) {
+                weaponContainer.appendChild(cardElement);
+            }
+        });
+    } else {
+        weaponContainer.innerHTML = '<p class="no-cards">No weapon cards yet. Open a Weapon Booster to get started!</p>';
+    }
 }
+
+// --- Modal UI ---
+/**
+ * Show a modal with the opened cards.
+ * @param {Array} cards - An array of card objects to display.
+ */
+function showCardModal(cards) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.tabIndex = 0;
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.onclick = () => document.body.removeChild(modal);
+    closeBtn.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            document.body.removeChild(modal);
+        }
+    };
+
+    const title = document.createElement('h2');
+    title.textContent = 'You got...';
+
+    const cardsContainer = document.createElement('div');
+    cardsContainer.className = 'cards-container';
+    cards.forEach(card => {
+        const cardElement = createCardElement(card, true);
+        cardsContainer.appendChild(cardElement);
+    });
+
+    const continueBtn = document.createElement('button');
+    continueBtn.className = 'btn primary';
+    continueBtn.textContent = 'Add to Collection';
+    continueBtn.onclick = () => document.body.removeChild(modal);
+
+    modalContent.append(closeBtn, title, cardsContainer, continueBtn);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Modal close on background click
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    };
+
+    // Accessibility: Focus on close
+    setTimeout(() => closeBtn.focus(), 50);
+}
+
+// --- Expose to window ---
+// --- Expose to window ---
+// Initialize default booster pack once DOM scripts loaded
+if (!currentBoosterPackConfig) {
+    if (window.boosterPacks && window.boosterPacks.humanoid) {
+        setCurrentBoosterPack('humanoid');
+    } else {
+        // Set to first available booster pack if any
+        const packs = window.boosterPacks ? Object.keys(window.boosterPacks) : [];
+        if (packs.length) setCurrentBoosterPack(packs[0]);
+    }
+}
+
+window.cards = {
+    renderCardCollection,
+    createCardElement,
+    showCardModal,
+    generateCard,
+    setCurrentBoosterPack
+};
+
+console.log('[cards.js] Refactored UI script loaded. window.cards is defined.');

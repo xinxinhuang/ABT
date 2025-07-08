@@ -154,7 +154,7 @@
                 openNowBtn.textContent = 'Opening...';
                 
                 // Immediately open the pack with the timer's original hours
-                window.openPackImmediately(timer.originalHours);
+                window.openPackImmediately(timer.originalHours, timer.boosterType);
                 
                 // Remove the timer since we're opening it now
                 window.storage.completeTimer(timerId);

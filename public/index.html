@@ -15,7 +15,7 @@
         <main>
             <section class="action-section">
                 <button id="humanoid-booster-btn" class="btn primary">Humanoid Booster</button>
-                <button id="weapon-booster-btn" class="btn" style="opacity: 0.6; cursor: not-allowed;" title="Coming Soon">Weapon Booster</button>
+                <button id="weapon-booster-btn" class="btn">Weapon Booster</button>
             </section>
 
             <section class="timers-section">
@@ -28,12 +28,43 @@
             <section class="collection-section">
                 <div class="collection-container">
                     <div class="collection-stats">
-                        <div id="collection-stats">
-                            <!-- Collection stats will be added here dynamically -->
+                        <h2>Your Collection</h2>
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Cards:</span>
+                                <span id="total-cards" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item gold">
+                                <span class="stat-label">Gold:</span>
+                                <span id="gold-cards" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item blue">
+                                <span class="stat-label">Blue:</span>
+                                <span id="blue-cards" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item silver">
+                                <span class="stat-label">Silver:</span>
+                                <span id="silver-cards" class="stat-value">0</span>
+                            </div>
                         </div>
                     </div>
-                    <div id="card-collection" class="cards-grid">
-                        <!-- Cards will be added here dynamically -->
+                    
+                    <div class="collection-columns">
+                        <!-- Humanoid Cards Column -->
+                        <div class="collection-column">
+                            <h3>Humanoid Cards</h3>
+                            <div id="humanoid-collection" class="card-collection">
+                                <!-- Humanoid cards will be displayed here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Weapon Cards Column -->
+                        <div class="collection-column">
+                            <h3>Weapon Cards</h3>
+                            <div id="weapon-collection" class="card-collection">
+                                <!-- Weapon cards will be displayed here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -55,7 +86,7 @@
                     Every hour after 4h adds +1% chance for better stats (max +20% at 24h)
                 </p>
             </div>
-                        <div class="modal-actions">
+            <div class="modal-actions">
                 <button id="cancel-timer" class="btn">Cancel</button>
                 <button id="confirm-timer" class="btn primary">Start Timer</button>
             </div>
@@ -100,7 +131,17 @@
             console.log('DOM fully loaded, starting script loading...');
             
             const scripts = [
+                // Core utilities first
                 'js/storage.js',
+
+                // Domain models (booster pack data)
+                'js/domain/humanoid-pack.js',
+                'js/domain/weapon-pack.js',
+
+                // Core logic
+                'js/card-logic.js',
+
+                // UI and App logic
                 'js/cards.js',
                 'js/timers.js',
                 'js/app.js'
